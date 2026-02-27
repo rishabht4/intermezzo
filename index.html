@@ -165,8 +165,8 @@
             if (deck.length === 0) return;
             const card = deck[currentIndex];
             const updateFields = () => {
-                document.getElementById('card-content').innerText = card.content;
-                document.getElementById('card-meaning').innerText = card.meaning;
+                document.getElementById('card-content').innerHTML = card.content;
+                document.getElementById('card-meaning').innerHTML = card.meaning;
                 const sourceEl = document.getElementById('card-source');
                 sourceEl.innerHTML = card.source.startsWith('http') 
                     ? `<a href="${card.source}" target="_blank" class="underline underline-offset-4 hover:text-stone-800">view source</a>` 
