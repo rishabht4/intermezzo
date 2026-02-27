@@ -7,11 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            transition: background-color 0.5s, color 0.5s;
+        }
         .serif { font-family: 'EB+Garamond', serif; }
+        
         .input-line { border: none; border-bottom: 1px solid #e5e7eb; outline: none; background: transparent; transition: border-color 0.3s; }
         .input-line:focus { border-bottom: 1px solid #111; }
         #card-container { transition: opacity 0.3s ease-in-out; }
+
+        /* Dark Mode Styles */
+        body.dark-mode { background-color: #1c1917; color: #d6d3d1; }
+        .dark-mode #login-overlay { background-color: #1c1917; }
+        .dark-mode .input-line { border-bottom-color: #444; color: #fff; }
+        .dark-mode .input-line:focus { border-bottom-color: #d6d3d1; }
+        .dark-mode #card-content { color: #e7e5e4; }
+        .dark-mode #card-meaning { color: #a8a29e; }
+        .dark-mode .bg-stone-200 { background-color: #444; }
+        .dark-mode tr { border-bottom-color: #292524 !important; }
+        .dark-mode #search-input { border-bottom-color: #444; color: #d6d3d1; }
     </style>
 </head>
 <body class="bg-white text-stone-900 min-h-screen flex items-center justify-center overflow-x-hidden">
@@ -26,9 +43,12 @@
     <main id="main-content" class="hidden max-w-4xl w-full px-6 md:px-12 opacity-0 transition-opacity duration-1000">
         
         <nav class="fixed top-8 left-0 w-full px-6 md:px-12 z-40">
-            <div class="max-w-4xl mx-auto flex justify-end">
-                <button id="view-toggle" onclick="toggleView()" class="text-[10px] uppercase tracking-[0.2em] text-stone-400 hover:text-black transition-colors">
-                    View Archive
+            <div class="max-w-4xl mx-auto flex justify-end items-center gap-6">
+                <button onclick="toggleTheme()" class="text-[10px] uppercase tracking-[0.2em] text-stone-400 hover:text-black dark:hover:text-white transition-colors">
+                    <span id="theme-icon">dark mode</span>
+                </button>
+                <button id="view-toggle" onclick="toggleView()" class="text-[10px] uppercase tracking-[0.2em] text-stone-400 hover:text-black dark:hover:text-white transition-colors">
+                    view archive
                 </button>
             </div>
         </nav>
@@ -52,21 +72,21 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-[10px] uppercase tracking-[0.2em] text-stone-400 border-b border-stone-100">
-                            <th class="pb-4 font-light">Content</th>
-                            <th class="pb-4 font-light">Meaning</th>
-                            <th class="pb-4 font-light hidden md:table-cell">Source</th>
+                            <th class="pb-4 font-light">content</th>
+                            <th class="pb-4 font-light">meaning</th>
+                            <th class="pb-4 font-light hidden md:table-cell">source</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="serif text-stone-700 divide-y divide-stone-50"></tbody>
+                    <tbody id="table-body" class="serif divide-y divide-stone-50"></tbody>
                 </table>
             </div>
         </div>
 
         <footer id="card-nav" class="fixed bottom-8 left-0 w-full px-6 md:px-12">
             <div class="max-w-2xl mx-auto flex justify-between items-center text-stone-400 font-light text-[10px] tracking-[0.2em]">
-                <button onclick="prevCard()" class="hover:text-black transition-colors py-4 uppercase">prev</button>
+                <button onclick="prevCard()" class="hover:text-black dark:hover:text-white transition-colors py-4 uppercase">prev</button>
                 <span id="card-counter">0 / 0</span>
-                <button onclick="nextCard()" class="hover:text-black transition-colors py-4 uppercase">next</button>
+                <button onclick="nextCard()" class="hover:text-black dark:hover:text-white transition-colors py-4 uppercase">next</button>
             </div>
         </footer>
     </main>
@@ -81,11 +101,22 @@
         let currentIndex = 0;
         let isTableView = false;
 
-        window.onload = fetchData;
+        // Theme initialization
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        window.onload = () => {
+            fetchData();
+            if (document.body.classList.contains('dark-mode')) {
+                document.getElementById('theme-icon').innerText = "light mode";
+            }
+        };
 
         async function fetchData() {
             try {
-                const response = await fetch(CONFIG.CSV_URL);
+                const cacheBuster = `&t=${new Date().getTime()}`;
+                const response = await fetch(CONFIG.CSV_URL + cacheBuster);
                 const data = await response.text();
                 parseCSV(data);
             } catch (error) { console.error("Data fetch error:", error); }
@@ -128,6 +159,12 @@
             }
         }
 
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon').innerText = isDark ? "light mode" : "dark mode";
+        }
+
         function toggleView() {
             isTableView = !isTableView;
             document.getElementById('card-view').classList.toggle('hidden', isTableView);
@@ -143,7 +180,7 @@
                     ? `<a href="${item.source}" target="_blank" class="underline underline-offset-2">link</a>` 
                     : item.source;
                 return `
-                    <tr>
+                    <tr class="border-stone-50 transition-colors">
                         <td class="py-6 pr-4 align-top leading-relaxed w-1/3 md:w-auto">${item.content}</td>
                         <td class="py-6 pr-4 align-top italic text-stone-500 leading-relaxed">
                             ${item.meaning}
@@ -169,7 +206,7 @@
                 document.getElementById('card-meaning').innerHTML = card.meaning;
                 const sourceEl = document.getElementById('card-source');
                 sourceEl.innerHTML = card.source.startsWith('http') 
-                    ? `<a href="${card.source}" target="_blank" class="underline underline-offset-4 hover:text-stone-800">view source</a>` 
+                    ? `<a href="${card.source}" target="_blank" class="underline underline-offset-4 hover:text-stone-800 dark:hover:text-white">view source</a>` 
                     : card.source;
                 document.getElementById('card-counter').innerText = `${currentIndex + 1} / ${deck.length}`;
             };
